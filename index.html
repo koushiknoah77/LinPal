@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinPal DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.0/dist/ethers.umd.min.js"></script>
+    <script src="app.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Glassmorphism Button with Corporate Yellow */
+        .corporate-yellow-glassmorphism {
+            background: rgba(255, 255, 255, 0.1); /* Semi-transparent background */
+            backdrop-filter: blur(10px); /* Frosted glass effect */
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+            padding: 12px 24px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease; /* Smooth transition for hover effects */
+        }
+
+        /* Yellow Gradient */
+        .corporate-yellow-glassmorphism-gradient {
+            background: linear-gradient(135deg, rgba(255, 221, 51, 0.7), rgba(255, 181, 33, 0.7)); /* Corporate Yellow Gradient */
+        }
+
+        /* Hover Effect */
+        .corporate-yellow-glassmorphism:hover {
+            transform: scale(1.05); /* Slight scale on hover */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1); /* Hover shadow */
+        }
+
+        /* Smooth Button Focus */
+        .corporate-yellow-glassmorphism:focus {
+            outline: none;
+            ring: 2px solid rgba(255, 221, 51, 0.9); /* Focus ring */
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid rgba(255, 221, 51, 0.7);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center font-sans">
+    <header class="bg-gray-800 w-full py-4 shadow-md">
+        <h1 class="text-center text-4xl font-bold text-blue-400">LinPal DApp</h1>
+    </header>
+
+    <main class="flex flex-col items-center mt-10 px-4 w-full">
+        <!-- Connect Wallet Section -->
+        <div class="mb-8">
+            <button id="connectButton" class="corporate-yellow-glassmorphism corporate-yellow-glassmorphism-gradient hover:bg-yellow-600">
+                Connect MetaMask
+            </button>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="corporate-yellow-glassmorphism p-6 rounded-lg shadow-md w-full max-w-lg hidden">
+            <h2 class="text-xl font-semibold mb-4">Wallet Information</h2>
+            <p><strong>Wallet Address:</strong> <span id="walletAddress" class="block mt-1 text-sm text-gray-400"></span></p>
+            <p><strong>ETH Balance:</strong> <span id="ethBalance" class="block mt-1 text-sm text-green-400">Not available</span></p>
+
+            <h3 class="text-lg font-semibold mt-6 mb-2">Profile Customization</h3>
+            <label for="shortBio" class="block text-sm font-medium">Short Bio:</label>
+            <textarea id="shortBio" placeholder="Tell us about yourself..." class="w-full p-2 mt-1 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+            <label for="tags" class="block text-sm font-medium mt-4">Tags (e.g., NFT collector, ETH maximalist):</label>
+            <input type="text" id="tags" placeholder="Enter tags" class="w-full p-2 mt-1 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            <div class="flex justify-between mt-4">
+                <button id="saveProfile" class="corporate-yellow-glassmorphism corporate-yellow-glassmorphism-gradient hover:bg-yellow-500">
+                    Save Profile
+                </button>
+                <button id="clearProfile" class="corporate-yellow-glassmorphism corporate-yellow-glassmorphism-gradient hover:bg-red-600">
+                    Clear Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Matchmaking Section -->
+        <div class="mt-10 w-full max-w-lg">
+            <button id="findMatchesButton" class="corporate-yellow-glassmorphism corporate-yellow-glassmorphism-gradient hover:bg-purple-600 w-full">
+                Find Matches
+            </button>
+            <div id="matchResults" class="corporate-yellow-glassmorphism p-6 mt-6 rounded-lg shadow-md hidden">
+                <h3 class="text-lg font-semibold mb-4">Potential Matches</h3>
+                <ul id="matchesList" class="list-disc list-inside text-sm text-gray-300"></ul>
+            </div>
+        </div>
+
+        <!-- Send ETH Section -->
+        <div id="sendETHSection" class="corporate-yellow-glassmorphism p-6 mt-10 rounded-lg shadow-md w-full max-w-lg hidden">
+            <h3 class="text-lg font-semibold mb-4">Send ETH</h3>
+            <label for="recipient" class="block text-sm font-medium">Recipient Address:</label>
+            <input type="text" id="recipient" placeholder="Enter recipient address" class="w-full p-2 mt-1 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            <label for="amount" class="block text-sm font-medium mt-4">Amount (ETH):</label>
+            <input type="number" id="amount" min="0" step="0.01" placeholder="0.1" class="w-full p-2 mt-1 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+            <button id="sendETHButton" class="corporate-yellow-glassmorphism corporate-yellow-glassmorphism-gradient hover:bg-yellow-600 w-full">
+                Send ETH
+            </button>
+
+            <div id="statusMessage" class="loading text-sm text-blue-400 mt-4 hidden">Sending transaction...</div>
+            <div id="errorMessage" class="error text-sm text-red-400 mt-4 hidden"></div>
+        </div>
+    </main>
+
+    <footer class="mt-auto py-4 w-full bg-gray-800 text-center text-sm text-gray-400">
+        LinPal DApp &copy; 2024
+    </footer>
+
+    <script>
+        // Connect to MetaMask
+        document.getElementById("connectButton").addEventListener("click", async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send('eth_requestAccounts', []);
+                const signer = provider.getSigner();
+                const walletAddress = await signer.getAddress();
+                const balance = await signer.getBalance();
+                const ethBalance = ethers.formatEther(balance);
+
+                document.getElementById("walletAddress").textContent = walletAddress;
+                document.getElementById("ethBalance").textContent = ethBalance;
+                document.getElementById("profile").classList.remove("hidden");
+            } else {
+                alert("Please install MetaMask!");
+            }
+        });
+
+        // Add functionality for "Save Profile", "Clear Profile", and "Find Matches" buttons here...
+    </script>
+</body>
+</html>
+
